@@ -45,3 +45,5 @@ Temporary Items
 Debug/*
 Release/*
 *.user
+package.config
+*.orig
