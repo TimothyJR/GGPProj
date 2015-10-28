@@ -8,6 +8,7 @@
 #include "texture.h"
 #include "Material.h"
 #include "Entity.h"
+#include "sky_entity.h"
 #include "Mesh.h"
 #include "player.h"
 #include "platform.h"
@@ -92,7 +93,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 	}
 }
 
-void draw(dx_info& render_target, material& basic, material& particle_mat, const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, const player& player, const camera& camera)
+void draw(dx_info& render_target, material& basic, material& particle_mat, const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, const player& player, const camera& camera, sky_entity& sky)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
@@ -110,6 +111,13 @@ void draw(dx_info& render_target, material& basic, material& particle_mat, const
 	for (const auto& particle_em : particle_emitters) {
 		particle_em.draw(*render_target.device_context, camera);
 	}
+
+	// done drawing solid stuff, draw skybox
+	sky.draw(*render_target.device_context, camera);
+
+	// reset states to default
+	render_target.device_context->RSSetState(0);
+	render_target.device_context->OMSetDepthStencilState(0, 0);
 
 	HR(render_target.swap_chain->Present(0, 0));
 }
@@ -161,20 +169,27 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	lights.back().direction = DirectX::XMFLOAT3(0.0f, -1.0f, 1.0f);
 
 	auto basic_texture = load_texture_from_file(L"demo1.jpg", *window.dx.device).take();
+	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
 
 	std::vector<mesh> meshes;
 	meshes.push_back(load_mesh_from_file(R"(OBJ Files\cube.obj)", *window.dx.device).take());
 
+	// shaders
 	auto basic_pixel_shader = load_pixel_shader(L"PixelShader.cso", window.dx).take();
 	auto basic_vertex_shader = load_vertex_shader(L"VertexShader.cso", window.dx).take();
+	auto sky_pixel_shader = load_pixel_shader(L"SkyPS.cso", window.dx).take();
+	auto sky_vertex_shader = load_vertex_shader(L"SkyVS.cso", window.dx).take();
 
 	auto particle_pixel_shader = load_pixel_shader(L"ParticlePixelShader.cso", window.dx).take();
 	auto particle_vertex_shader = load_vertex_shader(L"ParticleVertexShader.cso", window.dx).take();
 	auto particle_geometry_shader = load_geometry_shader(L"ParticleGeometryShader.cso", window.dx).take();
 
 	auto basic_material = make_material(basic_vertex_shader, basic_pixel_shader, basic_texture);
+	auto sky_material = make_material(sky_vertex_shader, sky_pixel_shader, sky_texture);
 	auto particle_material = make_material(particle_vertex_shader, particle_pixel_shader, particle_geometry_shader);
-	
+
+	// make skybox entity
+	auto sky = make_sky_entity(meshes[0], sky_material);
 
 	//std::vector<entity> entities;
 	/*entities.push_back(make_entity(meshes[0], basic_material));
@@ -232,7 +247,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		if (dt >= 0.016f) {
 			previous_time = current_time;
 			update(dt, done, camera, platforms, particle_emitters, player);
-			draw(window.dx, basic_material, particle_material, lights, platforms, particle_emitters, player, camera);
+			draw(window.dx, basic_material, particle_material, lights, platforms, particle_emitters, player, camera, sky);
 			// read all of the messages in the queue
 		}
 	}

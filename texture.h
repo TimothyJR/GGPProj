@@ -6,9 +6,27 @@
 struct texture {
 
 	friend option<texture> load_texture_from_file(const wchar_t* filename, ID3D11Device& device);
+	friend option<texture> load_skybox(const wchar_t* filename, ID3D11Device& device);
 	dxi_ptr<ID3D11ShaderResourceView> resource_view;
 	dxi_ptr<ID3D11SamplerState> state;
+	dxi_ptr<ID3D11RasterizerState> rasterizer_state;
+	dxi_ptr<ID3D11DepthStencilState> depth_state;
 private:
 	texture();
 };
+
+// skybox - not sure if can combine with texture above so don't need another srv or sampler?
+/*
+struct skybox {
+
+	friend option<skybox> load_skybox(const wchar_t* filename, ID3D11Device& device);
+	dxi_ptr<ID3D11ShaderResourceView> resource_view;
+	dxi_ptr<ID3D11SamplerState> state;
+	dxi_ptr<ID3D11RasterizerState> rasterizer_state;
+	dxi_ptr<ID3D11DepthStencilState> depth_state;
+
+private:
+	skybox();
+};
+*/
 

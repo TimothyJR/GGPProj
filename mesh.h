@@ -17,8 +17,8 @@ struct d3d_buffer {
 		ret.len = len;
 		D3D11_BUFFER_DESC vbd;
 		vbd.Usage = D3D11_USAGE_IMMUTABLE;
-		vbd.ByteWidth = sizeof(T) * len; // 3 = number of vertices in the buffer
-		vbd.BindFlags = Type; //D3D11_BIND_VERTEX_BUFFER; // Tells DirectX this is a vertex buffer
+		vbd.ByteWidth = sizeof(T) * len;
+		vbd.BindFlags = Type;
 		vbd.CPUAccessFlags = 0;
 		vbd.MiscFlags = 0;
 		vbd.StructureByteStride = 0;
