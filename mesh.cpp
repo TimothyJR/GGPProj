@@ -6,14 +6,6 @@ mesh::mesh(vertex_buffer vertices, index_buffer indices)
 {}
 
 
-template <class T>
-std::unique_ptr<T[]> copy_to_owned_shallow(const std::vector<T>& input) {
-	auto ret = std::unique_ptr<T[]>(new T[input.size()]);
-
-	memcpy(ret.get(), input.data(), sizeof(T) * input.size());
-
-	return ret;
-}
 
 option<mesh> load_mesh_from_file(const char * filename, ID3D11Device& device) {
 	// File input object

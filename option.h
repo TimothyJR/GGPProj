@@ -28,20 +28,33 @@ public:
 	explicit option(Value value) : m_present(true), m_data(std::move(value)) {
 
 	}
+	option(const option& rhs) {
+		this->m_present = rhs.m_present;;
+		if (rhs.is_some()) {
+			this->m_data = rhs.m_data;
+		}
+	}
+	option& operator = (const option& rhs) {
+		this->m_present = rhs.m_present;
+		if (rhs.is_some()) {
+			this->m_data = rhs.m_data;
+		}
+		return *this;
+	}
 
 	option(option&& rhs) {
 		this->m_present = rhs.m_present;
-		rhs.m_present = false;
 		if (rhs.is_some()) {
 			this->m_data = std::move(rhs.m_data);
 		}
+		rhs.m_present = false;
 	}
 	option& operator = (option&& rhs) {
 		this->m_present = rhs.m_present;
-		rhs.m_present = false;
 		if (rhs.is_some()) {
 			this->m_data = std::move(rhs.m_data);
 		}
+		rhs.m_present = false;
 		return *this;
 	}
 	~option() {
@@ -151,8 +164,14 @@ public:
 	option() : m_data(nullptr) {
 
 	}
-	explicit option(const Value& value) : m_data(&value) {
+	explicit option(Value& value) : m_data(&value) {
 
+	}
+	option(const option& rhs) {
+		this->m_data = rhs.m_data;
+	}
+	option& operator = (const option& rhs) {
+		this->m_data = rhs.m_data;
 	}
 	option(option&& rhs) {
 		this->m_data = rhs.m_data;
@@ -163,9 +182,7 @@ public:
 		rhs.m_data = nullptr;
 	}
 	~option() {
-		if (this->m_data != nullptr) {
-			this->m_data->~Value();
-		}
+	
 	}
 	bool is_some() {
 		return this->m_data != nullptr;
@@ -269,5 +286,10 @@ template<typename Value>
 
 option<std::remove_reference_t<Value>> Some(Value&& value) {
 	return option<std::remove_reference_t<Value>>(std::forward<Value>(value));
+}
+template<typename Value>
+
+option<Value&> SomeRef(Value& value) {
+	return option<Value&>(std::forward<Value>(value));
 }
 #pragma warning(pop)

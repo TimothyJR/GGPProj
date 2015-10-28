@@ -309,6 +309,11 @@ bool geometry_shader::set_sampler_state(const char* name, ID3D11SamplerState* st
 	return true;
 }
 
+void geometry_shader::deactivate(ID3D11DeviceContext& device_context)
+{
+	device_context.GSSetShader(nullptr, 0, 0);
+}
+
 void geometry_shader::activate_with_buffers()
 {
 	// Set the shader and input layout

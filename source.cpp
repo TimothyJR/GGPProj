@@ -12,8 +12,9 @@
 #include "player.h"
 #include "platform.h"
 #include "my_math.h"
+#include "particle.h"
 
-void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, player& player) 
+void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<particle_container>& particle_emitters, player& player)
 {
 	const auto gravity = -4.0f;
 	const auto frame_time = 0.016f;
@@ -60,6 +61,10 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 		}
 	}
 
+	for (auto& particle_em : particle_emitters) {
+		particle_em.update(dt);
+	}
+
 	if (GetAsyncKeyState('W') & 0x8000 && !player.in_air) {
 		player.velocity.y = 4.0f;
 		player.in_air = true;
@@ -87,7 +92,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 	}
 }
 
-void draw(dx_info& render_target, material& basic, const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const player& player, const camera& camera)
+void draw(dx_info& render_target, material& basic, material& particle_mat, const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, const player& player, const camera& camera)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
@@ -101,6 +106,10 @@ void draw(dx_info& render_target, material& basic, const std::vector<directional
 		model.draw(*render_target.device_context, camera);
 	}
 	player.draw(*render_target.device_context, camera);
+	
+	for (const auto& particle_em : particle_emitters) {
+		particle_em.draw(*render_target.device_context, camera);
+	}
 
 	HR(render_target.swap_chain->Present(0, 0));
 }
@@ -159,7 +168,13 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto basic_pixel_shader = load_pixel_shader(L"PixelShader.cso", window.dx).take();
 	auto basic_vertex_shader = load_vertex_shader(L"VertexShader.cso", window.dx).take();
 
+	auto particle_pixel_shader = load_pixel_shader(L"ParticlePixelShader.cso", window.dx).take();
+	auto particle_vertex_shader = load_vertex_shader(L"ParticleVertexShader.cso", window.dx).take();
+	auto particle_geometry_shader = load_geometry_shader(L"ParticleGeometryShader.cso", window.dx).take();
+
 	auto basic_material = make_material(basic_vertex_shader, basic_pixel_shader, basic_texture);
+	auto particle_material = make_material(particle_vertex_shader, particle_pixel_shader, particle_geometry_shader);
+	
 
 	//std::vector<entity> entities;
 	/*entities.push_back(make_entity(meshes[0], basic_material));
@@ -178,7 +193,21 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	platforms.back().scale.x = 4.0f;
 	platforms.back().scale.y = 0.25;
 
+	std::vector<particle_container> particle_emitters;
+
+	auto particle_emitter = make_particle(
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+		DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
+		15,
+		10.0f,
+		DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), particle_material, *window.dx.device);
+	
+	particle_emitters.push_back(particle_emitter);
+
 	auto player = make_player(make_entity(meshes[0], basic_material));
+
+	
 
 	uint64_t performance_frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency);
@@ -202,8 +231,8 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		auto dt = (float)((current_time - previous_time) * performance_counter_seconds);
 		if (dt >= 0.016f) {
 			previous_time = current_time;
-			update(dt, done, camera, platforms, player);
-			draw(window.dx, basic_material, lights, platforms, player, camera);
+			update(dt, done, camera, platforms, particle_emitters, player);
+			draw(window.dx, basic_material, particle_material, lights, platforms, particle_emitters, player, camera);
 			// read all of the messages in the queue
 		}
 	}
@@ -223,3 +252,19 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	// Handles any messages the switch statement didn't
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
+/*
+constant_buffer: time
+vertex buffer {
+x, y, z, seed
+}
+1) vertex buffer of start positions (length, max_time)
+2) vertex shader -> geometry shader
+3.-1) geometry shader transforms position by equation with time and seed
+3) geometry shader first transforms position by world matrix
+4) builds the rectangle containing the color
+5) transforms that rectangle by projection matrix
+6) sends it to pixel shader
+7) pixel shader renders color based on time
+
+
+*/

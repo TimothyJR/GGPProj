@@ -268,9 +268,10 @@ public:
 
 	bool set_shader_resource_view(const char* name, ID3D11ShaderResourceView* resource_view);
 	bool set_sampler_state(const char* name, ID3D11SamplerState* sampler_state);
-
+	static void deactivate(ID3D11DeviceContext& device_context);
 protected:
 	friend class shader<geometry_shader, ID3D11GeometryShader>;
 	void activate_with_buffers();
 
 };
+

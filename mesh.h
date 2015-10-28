@@ -52,3 +52,12 @@ private:
 	mesh(vertex_buffer, index_buffer);
 };
 
+
+template <class T>
+std::unique_ptr<T[]> copy_to_owned_shallow(const std::vector<T>& input) {
+	auto ret = std::unique_ptr<T[]>(new T[input.size()]);
+
+	memcpy(ret.get(), input.data(), sizeof(T) * input.size());
+
+	return ret;
+}

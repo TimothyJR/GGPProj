@@ -29,6 +29,9 @@ public:
 	PointedToType** operator &() {
 		return this->m_value.GetAddressOf();
 	}
+	PointedToType* const* operator &() const {
+		return this->m_value.GetAddressOf();
+	}
 	PointedToType* operator ->() {
 		return this->m_value.Get();
 	}

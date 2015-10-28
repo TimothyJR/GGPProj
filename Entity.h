@@ -19,7 +19,7 @@ public:
 	material& shader;
 
 	friend entity make_entity(mesh& mesh, material& shader);
-private:
+protected:
 	void update_world_matrix() const;
 	entity(mesh& mesh, material& shader);
 	mutable DirectX::XMFLOAT4X4 world_matrix;

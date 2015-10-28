@@ -34,12 +34,11 @@ void entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 {
 	this->update_world_matrix();
 
-	
 	this->shader.vertex.set_data("world", this->world_matrix);
 	this->shader.vertex.set_data("view", camera.view_mat());
 	this->shader.vertex.set_data("projection", camera.projection);
-	this->shader.pixel.set_sampler_state("state", this->shader.texture_data.state);
-	this->shader.pixel.set_shader_resource_view("res", this->shader.texture_data.resource_view);
+	this->shader.pixel.set_sampler_state("state", this->shader.texture_data->state);
+	this->shader.pixel.set_shader_resource_view("res", this->shader.texture_data->resource_view);
 	this->shader.vertex.activate(true);
 	this->shader.pixel.activate(true);
 	UINT stride = sizeof(Vertex);
