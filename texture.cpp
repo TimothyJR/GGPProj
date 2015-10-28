@@ -6,7 +6,7 @@ option<texture> load_texture_from_file(const wchar_t * filename, ID3D11Device& d
 {
 
 	texture ret;
-	auto result = DirectX::CreateWICTextureFromFile(&device, L"demo1.jpg", nullptr, &ret.resource_view);
+	auto result = DirectX::CreateWICTextureFromFile(&device, filename, nullptr, &ret.resource_view);
 	if (result != S_OK) {
 		return None<texture>();
 	}
