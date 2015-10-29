@@ -8,7 +8,8 @@ particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 r
 	auto particles = std::unique_ptr<particle[]>(new particle[particle_amount]);
 	for (int i = 0; i < particle_amount; i++) {
 		particles[i].position = emitPosition;
-		particles[i].start_velocity = start_velocity;
+		//particles[i].start_velocity = start_velocity;
+		particles[i].start_velocity = DirectX::XMFLOAT3((float)(rand() % 100 + 1) / 100, (float)(rand() % 100 + 1) / 100, (float)(rand() % 100 + 1) / 100);
 		particles[i].start_color = start_color;
 	}
 
