@@ -33,6 +33,10 @@ void sky_entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 		this->object_mesh.indices.len,
 		0,
 		0);
+
+	// reset states to default
+	device.RSSetState(0);
+	device.OMSetDepthStencilState(0, 0);
 }
 
 sky_entity make_sky_entity(mesh& mesh, material& shader) {

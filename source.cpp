@@ -66,7 +66,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 		particle_em.update(dt);
 	}
 
-	if (GetAsyncKeyState('W') & 0x8000 && !player.in_air) {
+	if (GetAsyncKeyState(VK_SPACE) & 0x8000 && !player.in_air) {
 		player.velocity.y = 4.0f;
 		player.in_air = true;
 	}
@@ -115,9 +115,6 @@ void draw(dx_info& render_target, material& basic, material& particle_mat, const
 	// done drawing solid stuff, draw skybox
 	sky.draw(*render_target.device_context, camera);
 
-	// reset states to default
-	render_target.device_context->RSSetState(0);
-	render_target.device_context->OMSetDepthStencilState(0, 0);
 
 	HR(render_target.swap_chain->Present(0, 0));
 }
@@ -128,8 +125,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd,
 
 int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR command_line,	int command_show)
 {
-
-	int x = sizeof(directional_light);
 
 #if defined(DEBUG) | defined(_DEBUG)
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
