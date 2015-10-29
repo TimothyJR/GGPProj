@@ -1,8 +1,8 @@
 #include "Entity.h"
 
 
-entity::entity(mesh& mesh, material& shader)
-: object_mesh(mesh), shader(shader)
+entity::entity(mesh& mesh, material& shader, texture& texture)
+: object_mesh(mesh), shader(shader), shader_texture(texture)
 {
 	DirectX::XMMATRIX iden = DirectX::XMMatrixIdentity();
 	DirectX::XMStoreFloat4x4(&world_matrix, iden);
@@ -37,8 +37,8 @@ void entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 	this->shader.vertex.set_data("world", this->world_matrix);
 	this->shader.vertex.set_data("view", camera.view_mat());
 	this->shader.vertex.set_data("projection", camera.projection);
-	this->shader.pixel.set_sampler_state("state", this->shader.texture_data->state);
-	this->shader.pixel.set_shader_resource_view("res", this->shader.texture_data->resource_view);
+	this->shader.pixel.set_sampler_state("state", this->shader_texture.state);
+	this->shader.pixel.set_shader_resource_view("res", this->shader_texture.resource_view);
 	this->shader.vertex.activate(true);
 	this->shader.pixel.activate(true);
 	UINT stride = sizeof(Vertex);
@@ -53,6 +53,6 @@ void entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 
 }
 
-entity make_entity(mesh& mesh, material& shader) {
-	return entity(mesh, shader);
+entity make_entity(mesh& mesh, material& shader, texture& texture) {
+	return entity(mesh, shader, texture);
 }

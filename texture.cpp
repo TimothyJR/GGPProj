@@ -27,13 +27,17 @@ option<texture> load_texture_from_file(const wchar_t * filename, ID3D11Device& d
 	return Some(std::move(ret));
 }
 
-option<texture> load_skybox(const wchar_t * filename, ID3D11Device& device)
+texture::texture()
+{
+}
+
+option<skybox_texture> load_skybox(const wchar_t * filename, ID3D11Device& device)
 {
 
-	texture sky;
+	skybox_texture sky;
 	auto result = DirectX::CreateDDSTextureFromFile(&device, L"SunnyCubeMap.dds", nullptr, &sky.resource_view);
 	if (result != S_OK) {
-		return None<texture>();
+		return None<skybox_texture>();
 	}
 
 	D3D11_SAMPLER_DESC builder;
@@ -62,12 +66,12 @@ option<texture> load_skybox(const wchar_t * filename, ID3D11Device& device)
 	device.CreateDepthStencilState(&dsDesc, &sky.depth_state);
 
 	if (result != S_OK) {
-		return None<texture>();
+		return None<skybox_texture>();
 	}
 
 	return Some(std::move(sky));
 }
 
-texture::texture()
+skybox_texture::skybox_texture()
 {
 }

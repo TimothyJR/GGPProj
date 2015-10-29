@@ -2,8 +2,8 @@
 
 
 
-sky_entity::sky_entity(mesh& mesh, material& shader)
-	: object_mesh(mesh), shader(shader)
+sky_entity::sky_entity(mesh& mesh, material& shader, skybox_texture& texture)
+	: object_mesh(mesh), shader(shader), texture(texture)
 {
 
 }
@@ -17,11 +17,11 @@ void sky_entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 	
 	this->shader.vertex.set_data("view", camera.view_mat());
 	this->shader.vertex.set_data("projection", camera.projection);
-	this->shader.pixel.set_sampler_state("trilinear", this->shader.texture_data->state);
-	this->shader.pixel.set_shader_resource_view("sky", this->shader.texture_data->resource_view);
-	device.RSSetState(this->shader.texture_data->rasterizer_state);
+	this->shader.pixel.set_sampler_state("trilinear", this->texture.state);
+	this->shader.pixel.set_shader_resource_view("sky", this->texture.resource_view);
+	device.RSSetState(this->texture.rasterizer_state);
 	
-	device.OMSetDepthStencilState(this->shader.texture_data->depth_state, 0);
+	device.OMSetDepthStencilState(this->texture.depth_state, 0);
 	this->shader.vertex.activate(true);
 	this->shader.pixel.activate(true);
 	UINT stride = sizeof(Vertex);
@@ -39,6 +39,6 @@ void sky_entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 	device.OMSetDepthStencilState(0, 0);
 }
 
-sky_entity make_sky_entity(mesh& mesh, material& shader) {
-	return sky_entity(mesh, shader);
+sky_entity make_sky_entity(mesh& mesh, material& shader, skybox_texture& texture) {
+	return sky_entity(mesh, shader, texture);
 }

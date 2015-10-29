@@ -17,11 +17,12 @@ public:
 	DirectX::XMFLOAT3 scale;
 	mesh& object_mesh;
 	material& shader;
+	texture& shader_texture;
 
-	friend entity make_entity(mesh& mesh, material& shader);
+	friend entity make_entity(mesh& mesh, material& shader, texture& texture);
 protected:
 	void update_world_matrix() const;
-	entity(mesh& mesh, material& shader);
+	entity(mesh& mesh, material& shader, texture& texture);
 	mutable DirectX::XMFLOAT4X4 world_matrix;
 
 };

@@ -179,25 +179,18 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto particle_vertex_shader = load_vertex_shader(L"ParticleVertexShader.cso", window.dx).take();
 	auto particle_geometry_shader = load_geometry_shader(L"ParticleGeometryShader.cso", window.dx).take();
 
-	auto basic_material = make_material(basic_vertex_shader, basic_pixel_shader, basic_texture);
-	auto sky_material = make_material(sky_vertex_shader, sky_pixel_shader, sky_texture);
+	auto basic_material = make_material(basic_vertex_shader, basic_pixel_shader);
+	auto sky_material = make_material(sky_vertex_shader, sky_pixel_shader);
 	auto particle_material = make_material(particle_vertex_shader, particle_pixel_shader, particle_geometry_shader);
 
-	// make skybox entity
-	auto sky = make_sky_entity(meshes[0], sky_material);
+	auto sky = make_sky_entity(meshes[0], sky_material, sky_texture);
 
-	//std::vector<entity> entities;
-	/*entities.push_back(make_entity(meshes[0], basic_material));
-	entities[0].position.y = -2.75;
-	entities[0].scale.x = 4;
-	entities[0].scale.y = 0.25;
-	*/
 	std::vector<platform> platforms;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material), 4000.0f, 0.25f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4000.0f, 0.25f));
 	platforms.back().position.y = -2.75;
 	platforms.back().scale.x = 4000;
 	platforms.back().scale.y = 0.25;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material), 4.0f, 0.25f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.25f));
 	platforms.back().position.y = -2.0;
 	platforms.back().position.x = 6.0f;
 	platforms.back().scale.x = 4.0f;
@@ -215,9 +208,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	
 	particle_emitters.push_back(particle_emitter);
 
-	auto player = make_player(make_entity(meshes[0], basic_material));
-
-	
+	auto player = make_player(make_entity(meshes[0], basic_material, basic_texture));
 
 	uint64_t performance_frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency);
@@ -262,19 +253,3 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	// Handles any messages the switch statement didn't
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
-/*
-constant_buffer: time
-vertex buffer {
-x, y, z, seed
-}
-1) vertex buffer of start positions (length, max_time)
-2) vertex shader -> geometry shader
-3.-1) geometry shader transforms position by equation with time and seed
-3) geometry shader first transforms position by world matrix
-4) builds the rectangle containing the color
-5) transforms that rectangle by projection matrix
-6) sends it to pixel shader
-7) pixel shader renders color based on time
-
-
-*/
