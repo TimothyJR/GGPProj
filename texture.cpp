@@ -35,7 +35,7 @@ option<skybox_texture> load_skybox(const wchar_t * filename, ID3D11Device& devic
 {
 
 	skybox_texture sky;
-	auto result = DirectX::CreateDDSTextureFromFile(&device, L"SunnyCubeMap.dds", nullptr, &sky.resource_view);
+	auto result = DirectX::CreateDDSTextureFromFile(&device, filename, nullptr, &sky.resource_view);
 	if (result != S_OK) {
 		return None<skybox_texture>();
 	}
