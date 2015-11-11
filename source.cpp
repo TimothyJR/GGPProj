@@ -105,7 +105,7 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	/*
 	draw shadow map here
 	*/
-	shadows.activate(render_target, {});
+	shadows.activate(render_target, {}); // TODO: SETUP THE LIGHTS HERE
 
 	for (const auto& model : platforms) {
 		model.draw_with_activated_shader(*render_target.device_context, shadows.shader);
