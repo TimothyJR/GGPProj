@@ -96,12 +96,26 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
 	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, 
-	const player& player, const camera& camera, sky_entity& sky)
+	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
 	render_target.device_context->ClearDepthStencilView(render_target.depth_stencil_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
+	/*
+	draw shadow map here
+	*/
+	shadows.activate(render_target, {});
+
+	for (const auto& model : platforms) {
+		model.draw_with_activated_shader(*render_target.device_context, shadows.shader);
+	}
+	player.draw_with_activated_shader(*render_target.device_context, shadows.shader);
+
+	shadows.deactivate(render_target);
+	/*
+	end draw shadow map	
+	*/
 
 	basic.pixel.set_data("light", lights[0]);
 	basic.pixel.set_data("other_light", lights[1]);
@@ -249,7 +263,9 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		if (dt >= 0.016f) {
 			previous_time = current_time;
 			update(dt, done, camera, platforms, particle_emitters, player);
-			draw(window.dx, basic_material, particle_material, lights, platforms, particle_emitters, player, camera, sky);
+			draw(window.dx, basic_material, particle_material, 
+				lights, platforms, particle_emitters, 
+				player, camera, sky, shadow_map);
 			// read all of the messages in the queue
 		}
 	}

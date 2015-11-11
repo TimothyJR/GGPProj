@@ -53,6 +53,24 @@ void entity::draw(ID3D11DeviceContext& device, const camera& camera) const
 
 }
 
+void entity::draw_with_activated_shader(ID3D11DeviceContext& device, vertex_shader& activated_vertex_shader) const
+{ 
+	this->update_world_matrix();
+
+	activated_vertex_shader.set_data("world", this->world_matrix);
+	activated_vertex_shader.copy_all_buffers();
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	device.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	device.IASetVertexBuffers(0, 1, &this->object_mesh.vertices.buffer, &stride, &offset);
+	device.IASetIndexBuffer(this->object_mesh.indices.buffer, DXGI_FORMAT_R32_UINT, 0);
+	device.DrawIndexed(
+		this->object_mesh.indices.len,
+		0,
+		0);
+}
+
 entity make_entity(mesh& mesh, material& shader, texture& texture) {
 	return entity(mesh, shader, texture);
 }

@@ -11,6 +11,7 @@ public:
 	~entity();
 
 	void draw(ID3D11DeviceContext& device, const camera& camera) const;
+	void draw_with_activated_shader(ID3D11DeviceContext& device, vertex_shader& activated_vertex_shader) const;
 
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 rotation;
