@@ -109,7 +109,10 @@ void draw(dx_info& render_target, material& basic, material& particle_mat, const
 	player.draw(*render_target.device_context, camera);
 	
 	for (const auto& particle_em : particle_emitters) {
-		particle_em.draw(*render_target.device_context, camera);
+		if (particle_em.dt < particle_em.duration) {
+			particle_em.draw(*render_target.device_context, camera);
+		}
+		
 	}
 
 	// done drawing solid stuff, draw skybox
@@ -199,12 +202,19 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	std::vector<particle_container> particle_emitters;
 
 	auto particle_emitter = make_particle(
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-		DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),
-		15,
-		10.0f,
-		DirectX::XMFLOAT3(1.0f, 0.0f, 0.0f),
-		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f), particle_material, *window.dx.device);
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
+		50,											// Particle Amount
+		5.0f,										// Duration
+		2.0f,										// Start Speed
+		0.0f,										// End Speed
+		0.5f,										// Start Size
+		0.5f,										// End Size
+		6.29f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),	// Start Color
+		DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),	// End Color
+		0,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
+		particle_material, *window.dx.device);
 	
 	particle_emitters.push_back(particle_emitter);
 
