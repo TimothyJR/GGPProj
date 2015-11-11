@@ -14,6 +14,7 @@
 #include "platform.h"
 #include "my_math.h"
 #include "particle.h"
+#include "shadow_map.h"
 
 void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<particle_container>& particle_emitters, player& player)
 {
@@ -93,7 +94,9 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 	}
 }
 
-void draw(dx_info& render_target, material& basic, material& particle_mat, const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, const player& player, const camera& camera, sky_entity& sky)
+void draw(dx_info& render_target, material& basic, material& particle_mat, 
+	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, 
+	const player& player, const camera& camera, sky_entity& sky)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
@@ -182,6 +185,9 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto particle_vertex_shader = load_vertex_shader(L"ParticleVertexShader.cso", window.dx).take();
 	auto particle_geometry_shader = load_geometry_shader(L"ParticleGeometryShader.cso", window.dx).take();
 
+	auto shadow_shader = load_vertex_shader(L"ShadowVertexShader.cso", window.dx).take();
+	auto shadow_map = make_shadow_map(window.dx, shadow_shader, 1024);
+ 
 	auto basic_material = make_material(basic_vertex_shader, basic_pixel_shader);
 	auto sky_material = make_material(sky_vertex_shader, sky_pixel_shader);
 	auto particle_material = make_material(particle_vertex_shader, particle_pixel_shader, particle_geometry_shader);

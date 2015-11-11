@@ -78,6 +78,7 @@
     <ClCompile Include="material.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="dxerr.cpp" />
+    <ClCompile Include="shadow_map.cpp" />
     <ClCompile Include="sky_entity.cpp" />
     <ClCompile Include="source.cpp" />
     <ClCompile Include="texture.cpp" />
@@ -99,6 +100,7 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="dxerr.h" />
     <ClInclude Include="option.h" />
+    <ClInclude Include="shadow_map.h" />
     <ClInclude Include="sky_entity.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="vertex.h" />

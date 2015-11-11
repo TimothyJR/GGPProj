@@ -60,6 +60,9 @@
     <ClCompile Include="sky_entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="shadow_map.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dxerr.h">
@@ -117,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sky_entity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shadow_map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
