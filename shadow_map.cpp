@@ -40,9 +40,9 @@ void shadow_map::activate(dx_info& info, const light_info& light)
 void shadow_map::deactivate(dx_info& info)
 {
 	// reset
-	info.device_context->OMSetRenderTargets(0, nullptr, info.depth_stencil_view);
+	info.device_context->OMSetRenderTargets(1, &info.render_target_view, info.depth_stencil_view);
 	info.device_context->RSSetViewports(1, &info.viewport);
-	info.device_context->RSSetState(0);
+	info.device_context->RSSetState(nullptr);
 }
 
 shadow_map_texture make_shadow_map_texture(dx_info& info, int size)
