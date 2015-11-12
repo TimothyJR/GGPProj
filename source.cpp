@@ -96,7 +96,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
 	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, 
-	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows)
+	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows /*, const light_info lightInfo*/)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
@@ -106,6 +106,9 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	draw shadow map here
 	*/
 	shadows.activate(render_target, {}); // TODO: SETUP THE LIGHTS HERE
+
+	// just use main directional light
+
 
 	for (const auto& model : platforms) {
 		model.draw_with_activated_shader(*render_target.device_context, shadows.shader);
@@ -182,6 +185,27 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	lights.back().ambient_color = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	lights.back().diffuse_color = DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
 	lights.back().direction = DirectX::XMFLOAT3(0.0f, -1.0f, 1.0f);
+
+	// light matrices for shadow map - using main directional light
+	DirectX::XMFLOAT4X4 shadow_view;
+	DirectX::XMMATRIX sView = DirectX::XMMatrixLookToLH(
+		DirectX::XMVectorSet(0, 20, -20, 0),	// eye position
+		DirectX::XMVectorSet(1, 1, 0, 0),		// eye direction
+		DirectX::XMVectorSet(0, 1, 0, 0));		// up direction
+	XMStoreFloat4x4(&shadow_view, XMMatrixTranspose(sView));
+	DirectX::XMFLOAT4X4 shadow_proj;
+	DirectX::XMMATRIX sProj = DirectX::XMMatrixOrthographicLH(
+		10.0f,		// width in world units
+		10.0f,		// height in wolrd units
+		0.1f,		// near plane dist
+		100.0f);	// far plane dist
+	XMStoreFloat4x4(&shadow_proj, XMMatrixTranspose(sProj));
+
+	/*light_info lightInfo; */
+	// I don't understand how to make a light_info object... but I have the matrices
+	// view = shadow_view;
+	// projection = shadow_projection;
+	
 
 	auto basic_texture = load_texture_from_file(L"demo1.jpg", *window.dx.device).take();
 	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
@@ -265,7 +289,8 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 			update(dt, done, camera, platforms, particle_emitters, player);
 			draw(window.dx, basic_material, particle_material, 
 				lights, platforms, particle_emitters, 
-				player, camera, sky, shadow_map);
+				player, camera, sky, 
+				shadow_map /*, lightInfo*/);
 			// read all of the messages in the queue
 		}
 	}
