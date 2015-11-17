@@ -30,15 +30,20 @@ void entity::update_world_matrix() const
 	DirectX::XMStoreFloat4x4(&world_matrix, DirectX::XMMatrixTranspose(total));
 }
 
-void entity::draw(ID3D11DeviceContext& device, const camera& camera) const
+void entity::draw(ID3D11DeviceContext& device, const camera& camera, shadow_map& shadow_map) const
 {
 	this->update_world_matrix();
 
 	this->shader.vertex.set_data("world", this->world_matrix);
 	this->shader.vertex.set_data("view", camera.view_mat());
 	this->shader.vertex.set_data("projection", camera.projection);
+	this->shader.vertex.set_data("shadowView", shadow_map.light_view);
+	this->shader.vertex.set_data("shadowProjection", shadow_map.light_projection);
 	this->shader.pixel.set_sampler_state("state", this->shader_texture.state);
 	this->shader.pixel.set_shader_resource_view("res", this->shader_texture.resource_view);
+	this->shader.pixel.set_shader_resource_view("shadowMap", shadow_map.shadow.resource_view);
+	this->shader.pixel.set_sampler_state("shadowSampler", shadow_map.shadow.sampler_state);
+
 	this->shader.vertex.activate(true);
 	this->shader.pixel.activate(true);
 	UINT stride = sizeof(Vertex);

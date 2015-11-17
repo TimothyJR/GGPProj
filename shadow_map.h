@@ -14,8 +14,9 @@ private:
 };
 
 struct light_info {
-	DirectX::XMVECTOR view;
-	DirectX::XMVECTOR projection;
+	// these should be matrices, not vectors?
+	DirectX::XMFLOAT4X4 view;
+	DirectX::XMFLOAT4X4 projection;
 };
 
 class shadow_map
@@ -26,6 +27,8 @@ public:
 	void deactivate(dx_info& info);
 	vertex_shader& shader;
 	shadow_map_texture shadow;
+	DirectX::XMFLOAT4X4 light_view;
+	DirectX::XMFLOAT4X4 light_projection;
 
 	friend shadow_map make_shadow_map(dx_info& info, vertex_shader& shader, int size);
 

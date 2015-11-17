@@ -4,13 +4,14 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Material.h"
+#include "shadow_map.h"
 
 class entity
 {
 public:
 	~entity();
 
-	void draw(ID3D11DeviceContext& device, const camera& camera) const;
+	void draw(ID3D11DeviceContext& device, const camera& camera, shadow_map& shadow_map) const;
 	void draw_with_activated_shader(ID3D11DeviceContext& device, vertex_shader& activated_vertex_shader) const;
 
 	DirectX::XMFLOAT3 position;

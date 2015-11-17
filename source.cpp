@@ -96,20 +96,16 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
 	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, 
-	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows /*, const light_info lightInfo*/)
+	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
-	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
-	render_target.device_context->ClearDepthStencilView(render_target.depth_stencil_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	/*
 	draw shadow map here
 	*/
-	shadows.activate(render_target, {}); // TODO: SETUP THE LIGHTS HERE
+	shadows.activate(render_target, lightInfo); // Sets up shadow map
 
-	// just use main directional light
-
-
+	// actually render everything
 	for (const auto& model : platforms) {
 		model.draw_with_activated_shader(*render_target.device_context, shadows.shader);
 	}
@@ -120,13 +116,19 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	end draw shadow map	
 	*/
 
+	render_target.device_context->ClearRenderTargetView(render_target.render_target_view, color);
+	render_target.device_context->ClearDepthStencilView(render_target.depth_stencil_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
 	basic.pixel.set_data("light", lights[0]);
-	basic.pixel.set_data("other_light", lights[1]);
+	//basic.pixel.set_data("other_light", lights[1]);
+
+	basic.pixel.set_shader_resource_view("shadowMap", shadows.shadow.resource_view);
+	basic.pixel.set_sampler_state("shadowSampler", shadows.shadow.sampler_state);
 
 	for (const auto& model : platforms) {
-		model.draw(*render_target.device_context, camera);
+		model.draw(*render_target.device_context, camera, shadows);
 	}
-	player.draw(*render_target.device_context, camera);
+	player.draw(*render_target.device_context, camera, shadows);
 	
 	for (const auto& particle_em : particle_emitters) {
 		if (particle_em.dt < particle_em.duration) {
@@ -134,6 +136,9 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 		}
 		
 	}
+
+	// donw drawing solid things, unbind shadow map
+	basic.pixel.set_shader_resource_view("shadowMap", 0);
 
 	// done drawing solid stuff, draw skybox
 	sky.draw(*render_target.device_context, camera);
@@ -177,9 +182,9 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	std::vector<directional_light> lights;
 
 	lights.push_back(directional_light());
-	lights.back().ambient_color = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
-	lights.back().diffuse_color = DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	lights.back().direction = DirectX::XMFLOAT3(1.0f, 1.0f, 0.0f);
+	lights.back().ambient_color = DirectX::XMFLOAT4(0.1f, 0.1f, 0.2f, 1.0f);
+	lights.back().diffuse_color = DirectX::XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+	lights.back().direction = DirectX::XMFLOAT3(0.0f, -1.0f, 1.0f);
 
 	lights.push_back(directional_light());
 	lights.back().ambient_color = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -190,8 +195,8 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	DirectX::XMFLOAT4X4 shadow_view;
 	DirectX::XMMATRIX sView = DirectX::XMMatrixLookToLH(
 		DirectX::XMVectorSet(0, 20, -20, 0),	// eye position
-		DirectX::XMVectorSet(1, 1, 0, 0),		// eye direction
-		DirectX::XMVectorSet(0, 1, 0, 0));		// up direction
+		DirectX::XMVectorSet(0.0f, -1, 1, 0),	// eye direction
+		DirectX::XMVectorSet(0, 1, 0, 0));		// up direction, pos y, no touch
 	XMStoreFloat4x4(&shadow_view, XMMatrixTranspose(sView));
 	DirectX::XMFLOAT4X4 shadow_proj;
 	DirectX::XMMATRIX sProj = DirectX::XMMatrixOrthographicLH(
@@ -201,11 +206,9 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		100.0f);	// far plane dist
 	XMStoreFloat4x4(&shadow_proj, XMMatrixTranspose(sProj));
 
-	/*light_info lightInfo; */
-	// I don't understand how to make a light_info object... but I have the matrices
-	// view = shadow_view;
-	// projection = shadow_projection;
-	
+	light_info lightInfo;
+	lightInfo.view = shadow_view;
+	lightInfo.projection = shadow_proj;
 
 	auto basic_texture = load_texture_from_file(L"demo1.jpg", *window.dx.device).take();
 	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
@@ -233,15 +236,26 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto sky = make_sky_entity(meshes[0], sky_material, sky_texture);
 
 	std::vector<platform> platforms;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4000.0f, 0.25f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
+	platforms.back().position.y = -3.25;
+	platforms.back().position.x = 13.0;
+	platforms.back().scale.x = 4;
+	platforms.back().scale.y = 0.5;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 10.0f, 0.5f));
 	platforms.back().position.y = -2.75;
-	platforms.back().scale.x = 4000;
-	platforms.back().scale.y = 0.25;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.25f));
+	platforms.back().scale.x = 10;
+	platforms.back().scale.y = 0.5;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
 	platforms.back().position.y = -2.0;
-	platforms.back().position.x = 6.0f;
-	platforms.back().scale.x = 4.0f;
-	platforms.back().scale.y = 0.25;
+	platforms.back().position.x = 8.0;
+	platforms.back().scale.x = 4.0;
+	platforms.back().scale.y = 0.5;
+
+	// temp floor
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
+	platforms.back().position.y = -10;
+	platforms.back().scale.x = 100;
+	platforms.back().scale.z = 100;
 
 	std::vector<particle_container> particle_emitters;
 
@@ -290,7 +304,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 			draw(window.dx, basic_material, particle_material, 
 				lights, platforms, particle_emitters, 
 				player, camera, sky, 
-				shadow_map /*, lightInfo*/);
+				shadow_map , lightInfo);
 			// read all of the messages in the queue
 		}
 	}

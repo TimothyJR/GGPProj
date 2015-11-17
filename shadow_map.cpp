@@ -14,27 +14,25 @@ shadow_map::~shadow_map()
 
 void shadow_map::activate(dx_info& info, const light_info& light) 
 {
-	// need to set special vertex data
-	// need to set basic ps and vs
-	// needs to be able to draw everything to it
-
 	info.device_context->OMSetRenderTargets(0, 0, shadow.depth_stencil_view);
 	info.device_context->ClearDepthStencilView(shadow.depth_stencil_view, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	info.device_context->RSSetState(shadow.rasterizer_state);
 
 	// need viewport
-	D3D11_VIEWPORT shadow_viewport = info.viewport; // need original viewport
+	D3D11_VIEWPORT shadow_viewport = info.viewport;
 	shadow_viewport.Width = (float)this->shadow_map_size;
 	shadow_viewport.Height = (float)this->shadow_map_size;
 	info.device_context->RSSetViewports(1, &shadow_viewport);
 
+	// grab light matrices
+	light_view = light.view;
+	light_projection = light.projection;
+
 	// turn on correct shaders
 	this->shader.activate(false);
-	this->shader.set_data("view", light.view); // need light matrices
-	this->shader.set_data("projection", light.projection);
-	info.device_context->PSSetShader(0, 0, 0); 
-
-
+	this->shader.set_data("view", light_view);
+	this->shader.set_data("projection", light_projection);
+	info.device_context->PSSetShader(0, 0, 0); // turn off pixel shader
 }
 
 void shadow_map::deactivate(dx_info& info)
