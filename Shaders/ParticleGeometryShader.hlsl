@@ -23,6 +23,7 @@ struct GeometryToPixel
 {
 	float4 position			: SV_POSITION;
 	float4 startColor		: COLOR0;
+	float2 texcoord			: TEXCOORD;
 };
 
 [maxvertexcount(4)]
@@ -47,6 +48,7 @@ void main(point VertexToGeometry input[1], inout TriangleStream<GeometryToPixel>
 	output.position.y -= start_size + change_size_over_time;
 	output.position = mul(output.position, mul(mul(world, view), projection));
 	output.startColor = input[0].startColor + change_color_over_time;
+	output.texcoord = float2(0,0);
 	spriteStream.Append(output);
 	
 	output.position = float4(actualPos, 1);
@@ -54,6 +56,7 @@ void main(point VertexToGeometry input[1], inout TriangleStream<GeometryToPixel>
 	output.position.y += start_size + change_size_over_time;
 	output.position = mul(output.position, (mul(mul(world, view), projection)));
 	output.startColor = input[0].startColor + change_color_over_time;
+	output.texcoord = float2(0,1);
 	spriteStream.Append(output);
 
 	output.position = float4(actualPos, 1);
@@ -61,6 +64,7 @@ void main(point VertexToGeometry input[1], inout TriangleStream<GeometryToPixel>
 	output.position.y -= start_size + change_size_over_time;
 	output.position = mul(output.position, (mul(mul(world, view), projection)));
 	output.startColor = input[0].startColor + change_color_over_time;
+	output.texcoord = float2(1,0);
 	spriteStream.Append(output);
 
 	
@@ -69,6 +73,7 @@ void main(point VertexToGeometry input[1], inout TriangleStream<GeometryToPixel>
 	output.position.y += start_size + change_size_over_time;
 	output.position = mul(output.position, (mul(mul(world, view), projection)));
 	output.startColor = input[0].startColor + change_color_over_time;
+	output.texcoord = float2(1,1);
 	spriteStream.Append(output);
 
 }

@@ -2,7 +2,7 @@
 #include <math.h>
 
 
-particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 emitPosition, int particle_amount, float duration, float start_speed, float end_speed, float start_size, float end_size, float angle_max, DirectX::XMFLOAT4 start_color, DirectX::XMFLOAT4 end_color, int full_sphere, material& material, ID3D11Device& device) {
+particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 emitPosition, int particle_amount, float duration, float start_speed, float end_speed, float start_size, float end_size, float angle_max, DirectX::XMFLOAT4 start_color, DirectX::XMFLOAT4 end_color, int full_sphere, material& material, texture& texture, ID3D11Device& device) {
 
 	auto particles = std::unique_ptr<particle[]>(new particle[particle_amount]);
 	for (int i = 0; i < particle_amount; i++) {
@@ -23,7 +23,7 @@ particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 r
 
 	auto buf = make_buffer(std::move(particles), particle_amount, device).take();
 
-	particle_container ret(std::move(buf), material);
+	particle_container ret(std::move(buf), material, texture);
 	ret.particle_amount = particle_amount;
 	ret.duration = duration;
 	ret.position = position;
@@ -61,6 +61,9 @@ void particle_container::draw(ID3D11DeviceContext & device, const camera & camer
 	this->shader.vertex.activate(true);
 	this->shader.geometry->activate(true);
 	this->shader.pixel.activate(true);
+	this->shader.pixel.set_sampler_state("state", this->shader_texture.state);
+	this->shader.pixel.set_shader_resource_view("res", this->shader_texture.resource_view);
+
 	UINT stride = sizeof(particle);
 	UINT offset = 0;
 	device.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
@@ -83,8 +86,8 @@ void particle_container::update_world_matrix() const
 	DirectX::XMStoreFloat4x4(&world_matrix, DirectX::XMMatrixTranspose(total));
 }
 
-particle_container::particle_container(particle_container::buffer particles, material& shader)
-	: particles(particles), shader(shader)
+particle_container::particle_container(particle_container::buffer particles, material& shader, texture& texture)
+	: particles(particles), shader(shader), shader_texture(texture)
 {
 }
 

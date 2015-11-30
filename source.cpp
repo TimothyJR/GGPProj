@@ -96,7 +96,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
 	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, 
-	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo)
+	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo, ID3D11BlendState& blend_state_transparent, ID3D11DepthStencilState& particle_depth_state)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
@@ -130,12 +130,7 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	}
 	player.draw(*render_target.device_context, camera, shadows);
 	
-	for (const auto& particle_em : particle_emitters) {
-		if (particle_em.dt < particle_em.duration) {
-			particle_em.draw(*render_target.device_context, camera);
-		}
-		
-	}
+
 
 	// donw drawing solid things, unbind shadow map
 	basic.pixel.set_shader_resource_view("shadowMap", 0);
@@ -143,6 +138,26 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	// done drawing solid stuff, draw skybox
 	sky.draw(*render_target.device_context, camera);
 
+	// Draw transparent
+
+	// Turn on the state
+	float factors[4] = { 1, 1, 1, 1 };
+	render_target.device_context->OMSetBlendState(
+		&blend_state_transparent,
+		factors,
+		0xFFFFFFFF);
+	render_target.device_context->OMSetDepthStencilState(&particle_depth_state, 0);
+
+	for (const auto& particle_em : particle_emitters) {
+		if (particle_em.dt < particle_em.duration) {
+			particle_em.draw(*render_target.device_context, camera);
+		}
+
+	}
+
+	// Reset blend state for next frame
+	render_target.device_context->OMSetBlendState(0, factors, 0xFFFFFFFF);
+	render_target.device_context->OMSetDepthStencilState(0, 0);
 
 	HR(render_target.swap_chain->Present(0, 0));
 }
@@ -211,8 +226,10 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	lightInfo.projection = shadow_proj;
 
 	auto basic_texture = load_texture_from_file(L"demo1.jpg", *window.dx.device).take();
-	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
+	auto particle_texture = load_texture_from_file(L"particle.png", *window.dx.device).take();
 
+	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
+	
 	std::vector<mesh> meshes;
 	meshes.push_back(load_mesh_from_file(R"(OBJ Files\cube.obj)", *window.dx.device).take());
 
@@ -269,12 +286,41 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		0.5f,										// Start Size
 		0.5f,										// End Size
 		6.29f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
-		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),	// Start Color
-		DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),	// End Color
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.1f),	// Start Color
+		DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.1f),	// End Color
 		0,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
-		particle_material, *window.dx.device);
+		particle_material, particle_texture, *window.dx.device);
 	
 	particle_emitters.push_back(particle_emitter);
+
+	// Blend state to go along with the particles
+	D3D11_BLEND_DESC blend_desc;
+	ZeroMemory(&blend_desc, sizeof(blend_desc));
+
+	blend_desc.AlphaToCoverageEnable = false;
+	blend_desc.IndependentBlendEnable = false;
+	blend_desc.RenderTarget[0].BlendEnable = true;
+	blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	ID3D11BlendState* blend_state_transparent;
+	window.dx.device->CreateBlendState(&blend_desc, &blend_state_transparent);
+
+	// Depth stencil for particles
+	D3D11_DEPTH_STENCIL_DESC depth_desc;
+	ZeroMemory(&depth_desc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+	depth_desc.DepthEnable = true;
+	depth_desc.DepthFunc = D3D11_COMPARISON_LESS;
+	depth_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+
+	ID3D11DepthStencilState* particle_depth_state;
+	window.dx.device->CreateDepthStencilState(&depth_desc, &particle_depth_state);
+
 
 	auto player = make_player(make_entity(meshes[0], basic_material, basic_texture));
 
@@ -304,7 +350,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 			draw(window.dx, basic_material, particle_material, 
 				lights, platforms, particle_emitters, 
 				player, camera, sky, 
-				shadow_map , lightInfo);
+				shadow_map , lightInfo, *blend_state_transparent, *particle_depth_state);
 			// read all of the messages in the queue
 		}
 	}
