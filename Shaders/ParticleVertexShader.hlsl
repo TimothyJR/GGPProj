@@ -1,11 +1,10 @@
 struct VertexShaderInput
 { 
-
 	float3 startPosition	: POSITION;
 	float3 velocity			: TEXCOORD0;
 	float4 startColor		: COLOR0;
 	float4 endColor			: COLOR1;
-	
+	float startRotation		: TEXCOORD1;
 };
 
 struct VertexToGeometry
@@ -14,6 +13,7 @@ struct VertexToGeometry
 	float3 velocity			: TEXCOORD0;
 	float4 startColor		: COLOR0;
 	float4 endColor			: COLOR1;
+	float startRotation		: TEXCOORD1;
 };
 
 VertexToGeometry main( VertexShaderInput input )
@@ -24,6 +24,6 @@ VertexToGeometry main( VertexShaderInput input )
 	output.velocity = input.velocity;
 	output.startColor = input.startColor;
 	output.endColor = input.endColor;
-
+	output.startRotation = input.startRotation;
 	return output;
 }

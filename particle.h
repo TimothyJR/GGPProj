@@ -10,13 +10,14 @@ struct particle {
 	DirectX::XMFLOAT3 start_velocity;
 	DirectX::XMFLOAT4 start_color;
 	DirectX::XMFLOAT4 end_color;
+	float start_rotation;
 };
 
 class particle_container
 {
 public:
 	using buffer = d3d_buffer<particle, D3D11_BIND_VERTEX_BUFFER>;
-	friend particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 emitPosition, int particle_amount, float duration, float start_speed, float end_speed, float start_size, float end_size, float angle_max, DirectX::XMFLOAT4 start_color, DirectX::XMFLOAT4 end_color, int full_sphere, material& material, texture& texture, ID3D11Device& device);
+	friend particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 rotation, DirectX::XMFLOAT3 scale, DirectX::XMFLOAT3 emitPosition, int particle_amount, float duration, float start_speed, float end_speed, float start_size, float end_size, float rotation_over_time, bool randomize_start_rotation, float angle_max, DirectX::XMFLOAT4 start_color, DirectX::XMFLOAT4 end_color, int full_sphere, material& material, texture& texture, ID3D11Device& device);
 	void update(float dt);
 	void draw(ID3D11DeviceContext& device, const camera& camera) const;
 	DirectX::XMFLOAT3 position;
@@ -38,6 +39,7 @@ private:
 	float end_speed;
 	float start_size;
 	float end_size;
+	float rotation_change;
 	buffer particles;
 	mutable DirectX::XMFLOAT4X4 world_matrix;
 };

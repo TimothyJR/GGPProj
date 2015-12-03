@@ -81,6 +81,17 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 		player.acceleration.x = run_accel * (player.in_air ? air_friction : 1.0f);
 	}
 
+	if (GetAsyncKeyState('F') & 0x8000) {
+		particle_emitters[0].dt = 0;
+	}
+
+	if (GetAsyncKeyState('G') & 0x8000) {
+		particle_emitters[1].dt = 0;
+	}
+
+	if (GetAsyncKeyState('H') & 0x8000) {
+		particle_emitters[2].dt = 0;
+	}
 
 	player.update(dt);
 	
@@ -226,12 +237,16 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	lightInfo.projection = shadow_proj;
 
 	auto basic_texture = load_texture_from_file(L"demo1.jpg", *window.dx.device).take();
+	auto mask_texture = load_texture_from_file(L"mask_texture.png", *window.dx.device).take();
+	//auto platform_texture = load_texture_from_file(L"platform_texture.png", *window.dx.device).take();
+	auto brick_texture = load_texture_from_file(L"bricks.jpg", *window.dx.device).take();
 	auto particle_texture = load_texture_from_file(L"particle.png", *window.dx.device).take();
-
+	
 	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
 	
 	std::vector<mesh> meshes;
-	meshes.push_back(load_mesh_from_file(R"(OBJ Files\cube.obj)", *window.dx.device).take());
+	meshes.push_back(load_mesh_from_file(R"(OBJ Files\platform.obj)", *window.dx.device).take());
+	meshes.push_back(load_mesh_from_file(R"(OBJ Files\mask.obj)", *window.dx.device).take());
 
 	// shaders
 	auto basic_pixel_shader = load_pixel_shader(L"PixelShader.cso", window.dx).take();
@@ -253,20 +268,20 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto sky = make_sky_entity(meshes[0], sky_material, sky_texture);
 
 	std::vector<platform> platforms;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, brick_texture), 4.0f, 0.6f));
 	platforms.back().position.y = -3.25;
 	platforms.back().position.x = 13.0;
-	platforms.back().scale.x = 4;
-	platforms.back().scale.y = 0.5;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 10.0f, 0.5f));
+	//platforms.back().scale.x = 4;
+	//platforms.back().scale.y = 0.5;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, brick_texture), 4.0f, 0.6f));
 	platforms.back().position.y = -2.75;
-	platforms.back().scale.x = 10;
-	platforms.back().scale.y = 0.5;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
+	//platforms.back().scale.x = 10;
+	//platforms.back().scale.y = 0.5;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, brick_texture), 4.0f, 0.6f));
 	platforms.back().position.y = -2.0;
 	platforms.back().position.x = 8.0;
-	platforms.back().scale.x = 4.0;
-	platforms.back().scale.y = 0.5;
+	//platforms.back().scale.x = 4.0;
+	//platforms.back().scale.y = 0.5;
 
 	// temp floor
 	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
@@ -279,19 +294,60 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto particle_emitter = make_particle(
 		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
 		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
-		50,											// Particle Amount
-		5.0f,										// Duration
-		2.0f,										// Start Speed
+		100,										// Particle Amount
+		2.0f,										// Duration
+		1.0f,										// Start Speed
 		0.0f,										// End Speed
 		0.5f,										// Start Size
-		0.5f,										// End Size
+		0.0f,										// End Size
+		6.29f,										// How much will each particle rotate
+		true,										// Should start rotations be different
 		6.29f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
-		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.1f),	// Start Color
-		DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.1f),	// End Color
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),	// Start Color
+		DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 0.0f),	// End Color
 		0,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
 		particle_material, particle_texture, *window.dx.device);
 	
 	particle_emitters.push_back(particle_emitter);
+
+	auto particle_emitter2 = make_particle(
+		DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
+		100,										// Particle Amount
+		2.0f,										// Duration
+		0.01f,										// Start Speed
+		3.0f,										// End Speed
+		0.5f,										// Start Size
+		0.0f,										// End Size
+		6.29f,										// How much will each particle rotate
+		true,										// Should start rotations be different
+		0.0f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
+		DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),	// Start Color
+		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f),	// End Color
+		0,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
+		particle_material, particle_texture, *window.dx.device);
+
+	particle_emitters.push_back(particle_emitter2);
+
+	auto particle_emitter3 = make_particle(
+		DirectX::XMFLOAT3(6.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
+		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
+		200,										// Particle Amount
+		2.0f,										// Duration
+		3.0f,										// Start Speed
+		0.0f,										// End Speed
+		0.0f,										// Start Size
+		1.5f,										// End Size
+		3.14f,										// How much will each particle rotate
+		true,										// Should start rotations be different
+		6.29f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
+		DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),	// Start Color
+		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f),	// End Color
+		1,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
+		particle_material, particle_texture, *window.dx.device);
+
+
+	particle_emitters.push_back(particle_emitter3);
 
 	// Blend state to go along with the particles
 	D3D11_BLEND_DESC blend_desc;
@@ -322,7 +378,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	window.dx.device->CreateDepthStencilState(&depth_desc, &particle_depth_state);
 
 
-	auto player = make_player(make_entity(meshes[0], basic_material, basic_texture));
+	auto player = make_player(make_entity(meshes[1], basic_material, brick_texture));
 
 	uint64_t performance_frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency);

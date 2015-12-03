@@ -13,5 +13,6 @@ float4 main(GeometryToPixel input ) : SV_TARGET
 	// Set up output struct
 	float4 surface = res.Sample(state, input.texcoord);
 
-	return float4(input.startColor.rgb * surface.rgb, surface.a);
+	//return float4(input.startColor.rgb * surface.rgb, surface.a);
+	return input.startColor * surface;
 }
