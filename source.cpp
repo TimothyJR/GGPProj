@@ -16,7 +16,7 @@
 #include "particle.h"
 #include "shadow_map.h"
 
-void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<particle_container>& particle_emitters, player& player)
+void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo)
 {
 	const auto gravity = -4.0f;
 	const auto frame_time = 0.016f;
@@ -98,6 +98,15 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 	const auto fluff = 8.0f;
 	camera.position.x += (player.position.x - camera.position.x) * fluff * dt;
 	camera.position.y += (player.position.y - (camera.position.y - 3)) * fluff * dt;
+
+	DirectX::XMFLOAT4X4 shadow_view;
+	DirectX::XMMATRIX sView = DirectX::XMMatrixLookToLH(
+		DirectX::XMVectorSet(camera.position.x, 20, -20, 0),	// eye position
+		DirectX::XMVectorSet(0.0f, -1, 1, 0),	// eye direction
+		DirectX::XMVectorSet(0, 1, 0, 0));		// up direction, pos y, no touch
+	XMStoreFloat4x4(&shadow_view, XMMatrixTranspose(sView));
+
+	lightInfo.view = shadow_view;
 
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE)) {
@@ -226,8 +235,8 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	XMStoreFloat4x4(&shadow_view, XMMatrixTranspose(sView));
 	DirectX::XMFLOAT4X4 shadow_proj;
 	DirectX::XMMATRIX sProj = DirectX::XMMatrixOrthographicLH(
-		10.0f,		// width in world units
-		10.0f,		// height in wolrd units
+		50.0f,		// width in world units
+		30.0f,		// height in wolrd units
 		0.1f,		// near plane dist
 		100.0f);	// far plane dist
 	XMStoreFloat4x4(&shadow_proj, XMMatrixTranspose(sProj));
@@ -402,7 +411,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		auto dt = (float)((current_time - previous_time) * performance_counter_seconds);
 		if (dt >= 0.016f) {
 			previous_time = current_time;
-			update(dt, done, camera, platforms, particle_emitters, player);
+			update(dt, done, camera, platforms, particle_emitters, player, lightInfo);
 			draw(window.dx, basic_material, particle_material, 
 				lights, platforms, particle_emitters, 
 				player, camera, sky, 
