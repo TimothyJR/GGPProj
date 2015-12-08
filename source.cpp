@@ -307,7 +307,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		2.0f,										// Duration
 		1.0f,										// Start Speed
 		0.0f,										// End Speed
-		0.5f,										// Start Size
+		5.0f,										// Start Size
 		0.0f,										// End Size
 		6.29f,										// How much will each particle rotate
 		true,										// Should start rotations be different
@@ -320,13 +320,13 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	particle_emitters.push_back(particle_emitter);
 
 	auto particle_emitter2 = make_particle(
-		DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
+		DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 90.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
 		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
 		100,										// Particle Amount
 		2.0f,										// Duration
 		0.01f,										// Start Speed
-		3.0f,										// End Speed
-		0.5f,										// Start Size
+		1.0f,										// End Speed
+		3.0f,										// Start Size
 		0.0f,										// End Size
 		6.29f,										// How much will each particle rotate
 		true,										// Should start rotations be different
@@ -341,17 +341,17 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto particle_emitter3 = make_particle(
 		DirectX::XMFLOAT3(6.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
 		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
-		200,										// Particle Amount
-		2.0f,										// Duration
-		3.0f,										// Start Speed
-		0.0f,										// End Speed
+		100,										// Particle Amount
+		3.0f,										// Duration
+		0.1f,										// Start Speed
+		0.8f,										// End Speed
 		0.0f,										// Start Size
-		1.5f,										// End Size
+		10.0f,										// End Size
 		3.14f,										// How much will each particle rotate
 		true,										// Should start rotations be different
 		6.29f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
-		DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),	// Start Color
-		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f),	// End Color
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),	// Start Color
+		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 0.0f),	// End Color
 		1,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
 		particle_material, particle_texture, *window.dx.device);
 
