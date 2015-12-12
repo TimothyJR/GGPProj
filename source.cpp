@@ -15,8 +15,10 @@
 #include "my_math.h"
 #include "particle.h"
 #include "shadow_map.h"
+#include "enemy.h"
+#include "spike.h"
 
-void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo)
+void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo)
 {
 	const auto gravity = -4.0f;
 	const auto frame_time = 0.016f;
@@ -63,6 +65,20 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 		}
 	}
 
+	for (auto& enm : enemies) {
+		auto result = enm.collides_with(player);
+
+		// on collision with enemy/hazard, respawn player
+		if (result.is_some()) {
+			player.position.x = 0;
+			player.position.y = 0;
+			player.velocity.x = 0;
+			player.velocity.y = 0;
+		}
+
+		enm.update(dt);
+	}
+
 	for (auto& particle_em : particle_emitters) {
 		particle_em.update(dt);
 	}
@@ -93,6 +109,14 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 		particle_emitters[2].dt = 0;
 	}
 
+	// if player falls off the map, respawn
+	if (player.position.y < -10) {
+		player.position.x = 0;
+		player.position.y = 0;
+		player.velocity.x = 0;
+		player.velocity.y = 0;
+	}
+
 	player.update(dt);
 	
 	const auto fluff = 8.0f;
@@ -115,7 +139,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 }
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
-	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<particle_container>& particle_emitters, 
+	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<enemy>& enemies, const std::vector<particle_container>& particle_emitters,
 	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo, ID3D11BlendState& blend_state_transparent, ID3D11DepthStencilState& particle_depth_state)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
@@ -129,6 +153,11 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	for (const auto& model : platforms) {
 		model.draw_with_activated_shader(*render_target.device_context, shadows.shader);
 	}
+
+	for (const auto& model : enemies) {
+		model.draw_with_activated_shader(*render_target.device_context, shadows.shader);
+	}
+
 	player.draw_with_activated_shader(*render_target.device_context, shadows.shader);
 
 	shadows.deactivate(render_target);
@@ -148,6 +177,11 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 	for (const auto& model : platforms) {
 		model.draw(*render_target.device_context, camera, shadows);
 	}
+
+	for (const auto& model : enemies) {
+		model.draw(*render_target.device_context, camera, shadows);
+	}
+
 	player.draw(*render_target.device_context, camera, shadows);
 	
 
@@ -250,12 +284,14 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	//auto platform_texture = load_texture_from_file(L"platform_texture.png", *window.dx.device).take();
 	auto brick_texture = load_texture_from_file(L"bricks.jpg", *window.dx.device).take();
 	auto particle_texture = load_texture_from_file(L"particle.png", *window.dx.device).take();
+	auto spike_texture = load_texture_from_file(L"spikes.jpg", *window.dx.device).take();
 	
 	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
 	
 	std::vector<mesh> meshes;
 	meshes.push_back(load_mesh_from_file(R"(OBJ Files\platform.obj)", *window.dx.device).take());
 	meshes.push_back(load_mesh_from_file(R"(OBJ Files\mask.obj)", *window.dx.device).take());
+	meshes.push_back(load_mesh_from_file(R"(OBJ Files\spikes_v2.obj)", *window.dx.device).take());
 
 	// shaders
 	auto basic_pixel_shader = load_pixel_shader(L"PixelShader.cso", window.dx).take();
@@ -297,6 +333,11 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	platforms.back().position.y = -10;
 	platforms.back().scale.x = 100;
 	platforms.back().scale.z = 100;
+
+	std::vector<enemy> enemies;
+	enemies.push_back(make_spike(make_enemy(make_entity(meshes[2], basic_material, spike_texture))));
+	enemies.back().position.y = -1.2;
+	enemies.back().position.x = 9.0;
 
 	std::vector<particle_container> particle_emitters;
 
@@ -411,9 +452,9 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		auto dt = (float)((current_time - previous_time) * performance_counter_seconds);
 		if (dt >= 0.016f) {
 			previous_time = current_time;
-			update(dt, done, camera, platforms, particle_emitters, player, lightInfo);
+			update(dt, done, camera, platforms, enemies, particle_emitters, player, lightInfo);
 			draw(window.dx, basic_material, particle_material, 
-				lights, platforms, particle_emitters, 
+				lights, platforms, enemies, particle_emitters, 
 				player, camera, sky, 
 				shadow_map , lightInfo, *blend_state_transparent, *particle_depth_state);
 			// read all of the messages in the queue
