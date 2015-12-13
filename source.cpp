@@ -17,6 +17,7 @@
 #include "shadow_map.h"
 #include "enemy.h"
 #include "spike.h"
+#include "StateMachine.h"
 
 void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo, StateMachine& sm)
 {

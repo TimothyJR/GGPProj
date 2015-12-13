@@ -12,7 +12,7 @@ class StateMachine
 	//dxi_ptr<DirectX::SpriteBatch> spriteBatch;
 	//dxi_ptr<DirectX::SpriteFont> spriteFont;
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;
-	std::unique_ptr<DirectX::SpriteFont> spriteFont;
+	//std::unique_ptr<DirectX::SpriteFont> spriteFont;
 	//states 0=menu, 1=running, 2=paused
 	int currentState;
 	//never changes state if key is held down, need to wait so much time before pausing again

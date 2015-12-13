@@ -68,6 +68,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="enemy.cpp" />
     <ClCompile Include="particle.cpp" />
     <ClCompile Include="platform.cpp" />
     <ClCompile Include="player.cpp" />
@@ -81,10 +82,13 @@
     <ClCompile Include="shadow_map.cpp" />
     <ClCompile Include="sky_entity.cpp" />
     <ClCompile Include="source.cpp" />
+    <ClCompile Include="spike.cpp" />
+    <ClCompile Include="StateMachine.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="window_class.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="enemy.h" />
     <ClInclude Include="my_math.h" />
     <ClInclude Include="particle.h" />
     <ClInclude Include="platform.h" />
@@ -102,6 +106,8 @@
     <ClInclude Include="option.h" />
     <ClInclude Include="shadow_map.h" />
     <ClInclude Include="sky_entity.h" />
+    <ClInclude Include="spike.h" />
+    <ClInclude Include="statemachine.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="vertex.h" />
     <ClInclude Include="window_class.h" />
