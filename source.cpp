@@ -18,8 +18,11 @@
 #include "enemy.h"
 #include "spike.h"
 
-void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo)
+void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo, StateMachine& sm)
 {
+	sm.Update();
+	if(sm.GetState() != 1){ return; }
+	
 	const auto gravity = -4.0f;
 	const auto frame_time = 0.016f;
 	const auto cutoff_for_air_frames = 2;
@@ -140,7 +143,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
 	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<enemy>& enemies, const std::vector<particle_container>& particle_emitters,
-	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo, ID3D11BlendState& blend_state_transparent, ID3D11DepthStencilState& particle_depth_state)
+	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo, ID3D11BlendState& blend_state_transparent, ID3D11DepthStencilState& particle_depth_state, StateMachine& sm)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
@@ -209,6 +212,8 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 
 	}
 
+	sm.DrawUI();
+	
 	// Reset blend state for next frame
 	render_target.device_context->OMSetBlendState(0, factors, 0xFFFFFFFF);
 	render_target.device_context->OMSetDepthStencilState(0, 0);
@@ -286,6 +291,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto particle_texture = load_texture_from_file(L"particle.png", *window.dx.device).take();
 	auto spike_texture = load_texture_from_file(L"spikes.jpg", *window.dx.device).take();
 	
+	auto deaths_texture = load_skybox(L"Deaths.dds", *window.dx.device).take();
 	auto sky_texture = load_skybox(L"SunnyCubeMap.dds", *window.dx.device).take(); // sky dds file texture
 	
 	std::vector<mesh> meshes;
@@ -430,6 +436,8 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 
 	auto player = make_player(make_entity(meshes[1], basic_material, brick_texture));
 
+	StateMachine* sm = new StateMachine(window.dx.device_context, window.dx.device, deaths_texture);
+	
 	uint64_t performance_frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency);
 	auto performance_counter_seconds = 1.0 / (double)performance_frequency;
@@ -452,11 +460,11 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		auto dt = (float)((current_time - previous_time) * performance_counter_seconds);
 		if (dt >= 0.016f) {
 			previous_time = current_time;
-			update(dt, done, camera, platforms, enemies, particle_emitters, player, lightInfo);
+			update(dt, done, camera, platforms, enemies, particle_emitters, player, lightInfo, *sm);
 			draw(window.dx, basic_material, particle_material, 
 				lights, platforms, enemies, particle_emitters, 
 				player, camera, sky, 
-				shadow_map , lightInfo, *blend_state_transparent, *particle_depth_state);
+				shadow_map , lightInfo, *blend_state_transparent, *particle_depth_state, *sm);
 			// read all of the messages in the queue
 		}
 	}
