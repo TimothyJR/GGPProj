@@ -280,8 +280,8 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	lightInfo.projection = shadow_proj;
 
 	auto basic_texture = load_texture_from_file(L"demo1.jpg", *window.dx.device).take();
-	auto mask_texture = load_texture_from_file(L"mask_texture.png", *window.dx.device).take();
-	//auto platform_texture = load_texture_from_file(L"platform_texture.png", *window.dx.device).take();
+	//auto mask_texture = load_texture_from_file(L"mask_texture.png", *window.dx.device).take();
+	auto platform_texture = load_texture_from_file(L"platform_texture.png", *window.dx.device).take();
 	auto brick_texture = load_texture_from_file(L"bricks.jpg", *window.dx.device).take();
 	auto particle_texture = load_texture_from_file(L"particle.png", *window.dx.device).take();
 	auto spike_texture = load_texture_from_file(L"spikes.jpg", *window.dx.device).take();
@@ -313,16 +313,16 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	auto sky = make_sky_entity(meshes[0], sky_material, sky_texture);
 
 	std::vector<platform> platforms;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, brick_texture), 4.0f, 0.6f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
 	platforms.back().position.y = -3.25;
 	platforms.back().position.x = 13.0;
 	//platforms.back().scale.x = 4;
 	//platforms.back().scale.y = 0.5;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, brick_texture), 4.0f, 0.6f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
 	platforms.back().position.y = -2.75;
 	//platforms.back().scale.x = 10;
 	//platforms.back().scale.y = 0.5;
-	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, brick_texture), 4.0f, 0.6f));
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
 	platforms.back().position.y = -2.0;
 	platforms.back().position.x = 8.0;
 	//platforms.back().scale.x = 4.0;
