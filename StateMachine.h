@@ -7,23 +7,23 @@
 #include "dxi_ptr.h"
 #include "DDSTextureLoader.h"
 
-class StateMachine
+class state_machine
 {
-	//dxi_ptr<DirectX::SpriteBatch> spriteBatch;
+	//dxi_ptr<DirectX::SpriteBatch> sprite_batch;
 	//dxi_ptr<DirectX::SpriteFont> spriteFont;
-	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;
+	std::unique_ptr<DirectX::SpriteBatch> sprite_batch;
 	//std::unique_ptr<DirectX::SpriteFont> spriteFont;
 	//states 0=menu, 1=running, 2=paused
-	int currentState;
+	int current_state;
 	//never changes state if key is held down, need to wait so much time before pausing again
-	texture& textureValue;
-	bool keyDown;
-	int frameCD;
+	texture& texture_value;
+	bool key_down;
+	int frame_cd;
 
 public:
-	StateMachine(ID3D11DeviceContext* ctx, ID3D11Device* device, texture& tex);
-	~StateMachine();
-	void Update();
+	state_machine(ID3D11DeviceContext* ctx, ID3D11Device* device, texture& tex);
+	~state_machine();
+	void update();
 	void DrawUI();
-	int GetState() { return currentState; }
+	int GetState() { return current_state; }
 };

@@ -1,7 +1,7 @@
 #include "StateMachine.h"
 
 
-StateMachine::StateMachine( ID3D11DeviceContext* ctx, ID3D11Device* device, texture& tex)
+state_machine::state_machine( ID3D11DeviceContext* ctx, ID3D11Device* device, texture& tex)
 	:textureValue(tex)
 {
 	//sb = new DirectX::SpriteBatch(ctx);
@@ -13,11 +13,11 @@ StateMachine::StateMachine( ID3D11DeviceContext* ctx, ID3D11Device* device, text
 }
 
 
-StateMachine::~StateMachine()
+state_machine::~state_machine()
 {
 }
 
-void StateMachine::Update() {
+void state_machine::Update() {
 	if (GetAsyncKeyState('P') & 0x8000 && !keyDown && frameCD <= 0) {
 		if (currentState == 1)
 			currentState = 2;
@@ -34,7 +34,7 @@ void StateMachine::Update() {
 	frameCD--;
 }
 
-void StateMachine::DrawUI() {
+void state_machine::DrawUI() {
 	if (currentState == 2) {
 		spriteBatch->Begin();
 		spriteBatch->Draw(textureValue.resource_view, DirectX::SimpleMath::Vector2(550.0f, 325.0f));

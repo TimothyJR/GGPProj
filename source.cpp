@@ -19,10 +19,14 @@
 #include "spike.h"
 #include "StateMachine.h"
 
-void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo, StateMachine& sm)
+template<typename ParticleCreator>
+void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo, state_machine& state_machine, ParticleCreator make_floor_hit_particle)
 {
-	sm.Update();
-	if(sm.GetState() != 1){ return; }
+	state_machine.Update();
+	if(state_machine.GetState() != 1)
+	{ 
+		return; 
+	}
 	
 	const auto gravity = -4.0f;
 	const auto frame_time = 0.016f;
@@ -58,19 +62,24 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 				player.position.x += penetration.x;
 				player.velocity.x = 0;
 			} else {
-				player.position.y += penetration.y;
-				player.velocity.y = 0;
 				// penetration is from the top, that means we're landing
 				if (penetration.y > 0.0f) {
 					player.in_air = false;
+					if (player.velocity.y < -0.2) {
+						auto loc = player.position;
+						loc.y += 0.05f;
+						particle_emitters.emplace_back(make_floor_hit_particle(loc));
+					}
 				}
+				player.position.y += penetration.y;
+				player.velocity.y = 0;
 			}
 
 		}
 	}
 
-	for (auto& enm : enemies) {
-		auto result = enm.collides_with(player);
+	for (auto& enemy : enemies) {
+		auto result = enemy.collides_with(player);
 
 		// on collision with enemy/hazard, respawn player
 		if (result.is_some()) {
@@ -80,7 +89,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 			player.velocity.y = 0;
 		}
 
-		enm.update(dt);
+		enemy.update(dt);
 	}
 
 	for (auto& particle_em : particle_emitters) {
@@ -96,21 +105,23 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 	if (GetAsyncKeyState('A') & 0x8000 ) {
 		player.acceleration.x = -run_accel * (player.in_air ? air_friction : 1.0f);
+		if (sign_of(player.acceleration.x) != sign_of(player.velocity.x) && !player.in_air) {
+			player.velocity.x *= 0.92;
+		}
 	}
 	else if (GetAsyncKeyState('D') & 0x8000) {
 		player.acceleration.x = run_accel * (player.in_air ? air_friction : 1.0f);
+		if (sign_of(player.acceleration.x) != sign_of(player.velocity.x) && !player.in_air) {
+			player.velocity.x *= 0.92;
+		}
+	}
+	else {
+		if (!player.in_air) {
+			player.velocity.x *= 0.92;
+		}
 	}
 
 	if (GetAsyncKeyState('F') & 0x8000) {
-		particle_emitters[0].dt = 0;
-	}
-
-	if (GetAsyncKeyState('G') & 0x8000) {
-		particle_emitters[1].dt = 0;
-	}
-
-	if (GetAsyncKeyState('H') & 0x8000) {
-		particle_emitters[2].dt = 0;
 	}
 
 	// if player falls off the map, respawn
@@ -144,7 +155,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 
 void draw(dx_info& render_target, material& basic, material& particle_mat, 
 	const std::vector<directional_light>& lights, const std::vector<platform>& platforms, const std::vector<enemy>& enemies, const std::vector<particle_container>& particle_emitters,
-	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo, ID3D11BlendState& blend_state_transparent, ID3D11DepthStencilState& particle_depth_state, StateMachine& sm)
+	const player& player, const camera& camera, sky_entity& sky, shadow_map& shadows , const light_info lightInfo, ID3D11BlendState& blend_state_transparent, ID3D11DepthStencilState& particle_depth_state, state_machine& sm)
 {
 	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
 
@@ -348,67 +359,26 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 
 	std::vector<particle_container> particle_emitters;
 
-	auto particle_emitter = make_particle(
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
-		100,										// Particle Amount
-		2.0f,										// Duration
-		1.0f,										// Start Speed
-		0.0f,										// End Speed
-		5.0f,										// Start Size
-		0.0f,										// End Size
-		6.29f,										// How much will each particle rotate
-		true,										// Should start rotations be different
-		6.29f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
-		DirectX::XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),	// Start Color
-		DirectX::XMFLOAT4(0.0f, 1.0f, 1.0f, 0.0f),	// End Color
-		0,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
-		particle_material, particle_texture, *window.dx.device);
-	
-	particle_emitters.push_back(particle_emitter);
-
-
 	// Use this particle system for the collision particles
 	// The first xmfloat3 is used to set the position of the particles
-	auto particle_emitter2 = make_particle(
-		DirectX::XMFLOAT3(3.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(90.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
-		100,										// Particle Amount
-		0.4f,										// Duration
-		3.0f,										// Start Speed
-		0.01f,										// End Speed
-		3.0f,										// Start Size
-		0.0f,										// End Size
-		6.29f,										// How much will each particle rotate
-		true,										// Should start rotations be different
-		0.0f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
-		DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),	// Start Color
-		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f),	// End Color
-		1,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
-		particle_material, particle_texture, *window.dx.device);
-
-	particle_emitters.push_back(particle_emitter2);
-
-
-	auto particle_emitter3 = make_particle(
-		DirectX::XMFLOAT3(6.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(90.0f, 90.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
-		DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
-		100,										// Particle Amount
-		2.0f,										// Duration
-		0.01f,										// Start Speed
-		1.0f,										// End Speed
-		3.0f,										// Start Size
-		0.0f,										// End Size
-		6.29f,										// How much will each particle rotate
-		true,										// Should start rotations be different
-		0.0f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
-		DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),	// Start Color
-		DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f),	// End Color
-		1,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
-		particle_material, particle_texture, *window.dx.device);
-
-
-	particle_emitters.push_back(particle_emitter3);
+	auto make_floor_hit_particle = [&](auto position) {
+		return make_particle(
+			position, DirectX::XMFLOAT3(90.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f), // Transformations
+			DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f),		// Emit position
+			100,										// Particle Amount
+			0.4f,										// Duration
+			3.0f,										// Start Speed
+			0.01f,										// End Speed
+			3.0f,										// Start Size
+			0.0f,										// End Size
+			6.29f,										// How much will each particle rotate
+			true,										// Should start rotations be different
+			0.0f,										// Max angle	(Using zero makes a circle using 2PI Makes a sphere)
+			DirectX::XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),	// Start Color
+			DirectX::XMFLOAT4(1.0f, 1.0f, 0.0f, 0.0f),	// End Color
+			1,											// Whether to use a sphere or half sphere (Should only be 0 or 1)
+			particle_material, particle_texture, *window.dx.device);
+	};
 
 	// Blend state to go along with the particles
 	D3D11_BLEND_DESC blend_desc;
@@ -441,7 +411,7 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 
 	auto player = make_player(make_entity(meshes[1], basic_material, brick_texture));
 
-	StateMachine* sm = new StateMachine(window.dx.device_context, window.dx.device, deaths_texture);
+	state_machine state_machine(window.dx.device_context, window.dx.device, deaths_texture);
 	
 	uint64_t performance_frequency;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&performance_frequency);
@@ -465,11 +435,11 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 		auto dt = (float)((current_time - previous_time) * performance_counter_seconds);
 		if (dt >= 0.016f) {
 			previous_time = current_time;
-			update(dt, done, camera, platforms, enemies, particle_emitters, player, lightInfo, *sm);
+			update(dt, done, camera, platforms, enemies, particle_emitters, player, lightInfo, state_machine, make_floor_hit_particle);
 			draw(window.dx, basic_material, particle_material, 
 				lights, platforms, enemies, particle_emitters, 
 				player, camera, sky, 
-				shadow_map , lightInfo, *blend_state_transparent, *particle_depth_state, *sm);
+				shadow_map , lightInfo, *blend_state_transparent, *particle_depth_state, state_machine);
 			// read all of the messages in the queue
 		}
 	}

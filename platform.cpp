@@ -15,7 +15,7 @@ option<collision_result> platform::collides_with(const player & player) const
 	auto y_diff = player.position.y - this->position.y;
 
 	auto player_half_width = 0.5f;
-	auto player_half_height = 0.5f;
+	auto player_half_height = 0.3f;
 
 	auto half_width_sum = this->m_half_width + player_half_width;
 	auto half_height_sum = this->m_half_height + player_half_height;

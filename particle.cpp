@@ -6,7 +6,7 @@ particle_container make_particle(DirectX::XMFLOAT3 position, DirectX::XMFLOAT3 r
 
 	auto particles = std::unique_ptr<particle[]>(new particle[particle_amount]);
 	for (int i = 0; i < particle_amount; i++) {
-		auto randomRadius = (float)rand() / (float)RAND_MAX;
+		auto randomRadius = (float)rand() / (float)RAND_MAX * 2 - 1;
 		auto randomAngle = (float)rand() / (float)RAND_MAX * angle_max;
 		auto randomHeight = (float)rand() / (float)RAND_MAX * (1 + full_sphere) - (1 * full_sphere);
 		auto direction = DirectX::XMFLOAT3(randomRadius * cos(randomAngle), randomHeight, randomRadius * sin(randomAngle));
