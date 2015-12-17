@@ -24,6 +24,6 @@ public:
 	state_machine(ID3D11DeviceContext* ctx, ID3D11Device* device, texture& tex);
 	~state_machine();
 	void update();
-	void DrawUI();
-	int GetState() { return current_state; }
+	void draw_ui();
+	int get_state() { return current_state; }
 };

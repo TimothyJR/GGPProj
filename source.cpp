@@ -22,20 +22,20 @@
 template<typename ParticleCreator>
 void update(float dt, bool& done, camera& camera, std::vector<platform>& platforms, std::vector<enemy>& enemies, std::vector<particle_container>& particle_emitters, player& player, light_info& lightInfo, state_machine& state_machine, ParticleCreator make_floor_hit_particle)
 {
-	state_machine.Update();
-	if(state_machine.GetState() != 1)
+	state_machine.update();
+	if(state_machine.get_state() != 1)
 	{ 
 		return; 
 	}
 	
-	const auto gravity = -4.0f;
+	const auto gravity = -30.0f;
 	const auto frame_time = 0.016f;
 	const auto cutoff_for_air_frames = 2;
 	
-	const auto run_accel = 8.0f;
+	const auto run_accel = 15.0f;
 	const auto max_x_vel = 10.0f;
 	const auto max_y_vel = 26.0f;
-	const auto air_friction = 0.1f;
+	const auto air_friction = 0.5f;
 
 	player.acceleration.x = 0;
 	player.acceleration.y = gravity;
@@ -52,6 +52,8 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 		player.in_air = true;
 	}
 
+
+
 	for (const auto& plat : platforms) {
 		auto result = plat.collides_with(player);
 		if (result.is_some()) {
@@ -65,7 +67,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 				// penetration is from the top, that means we're landing
 				if (penetration.y > 0.0f) {
 					player.in_air = false;
-					if (player.velocity.y < -0.2) {
+					if (player.velocity.y < -3.0) {
 						auto loc = player.position;
 						loc.y += 0.05f;
 						particle_emitters.emplace_back(make_floor_hit_particle(loc));
@@ -74,15 +76,33 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 				player.position.y += penetration.y;
 				player.velocity.y = 0;
 			}
-
 		}
 	}
 
 	for (auto& enemy : enemies) {
 		auto result = enemy.collides_with(player);
 
-		// on collision with enemy/hazard, respawn player
-		if (result.is_some()) {
+		// if landing on top of a spike trap, respawn player
+		if (enemy.is_spike) {
+			if (result.is_some()) {
+				auto penetration = result.unwrap().penetration;
+
+				if (penetration.x != 0.0f) {
+					player.position.x += penetration.x;
+					player.velocity.x = 0;
+				}
+
+				if (penetration.y > 0.0f && player.velocity.y <= 0.0f) {
+					player.position.x = 0;
+					player.position.y = 0;
+					player.velocity.x = 0;
+					player.velocity.y = 0;
+				}
+			}
+		}
+
+		// else, on collision with enemy/hazard, respawn player
+		else if (result.is_some()) {
 			player.position.x = 0;
 			player.position.y = 0;
 			player.velocity.x = 0;
@@ -97,7 +117,7 @@ void update(float dt, bool& done, camera& camera, std::vector<platform>& platfor
 	}
 
 	if (GetAsyncKeyState(VK_SPACE) & 0x8000 && !player.in_air) {
-		player.velocity.y = 4.0f;
+		player.velocity.y = 12.0f;
 		player.in_air = true;
 	}
 	else if (GetAsyncKeyState('S') & 0x8000) {
@@ -224,7 +244,7 @@ void draw(dx_info& render_target, material& basic, material& particle_mat,
 
 	}
 
-	sm.DrawUI();
+	sm.draw_ui();
 	
 	// Reset blend state for next frame
 	render_target.device_context->OMSetBlendState(0, factors, 0xFFFFFFFF);
@@ -345,6 +365,18 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	platforms.back().position.x = 8.0;
 	//platforms.back().scale.x = 4.0;
 	//platforms.back().scale.y = 0.5;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
+	platforms.back().position.y = -3.25;
+	platforms.back().position.x = 25.0;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
+	platforms.back().position.y = -1.0;
+	platforms.back().position.x = 30.0;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
+	platforms.back().position.y = 1.25;
+	platforms.back().position.x = 35.0;
+	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, platform_texture), 4.0f, 0.6f));
+	platforms.back().position.y = -0.75;
+	platforms.back().position.x = 42.5;
 
 	// temp floor
 	platforms.push_back(make_platform(make_entity(meshes[0], basic_material, basic_texture), 4.0f, 0.5f));
@@ -356,6 +388,12 @@ int WINAPI WinMain(HINSTANCE app_instance, HINSTANCE hPrevInstance,	LPSTR comman
 	enemies.push_back(make_spike(make_enemy(make_entity(meshes[2], basic_material, spike_texture))));
 	enemies.back().position.y = -1.2;
 	enemies.back().position.x = 9.0;
+	enemies.push_back(make_spike(make_enemy(make_entity(meshes[2], basic_material, spike_texture))));
+	enemies.back().position.y = 0.05;
+	enemies.back().position.x = 41.25;
+	enemies.push_back(make_spike(make_enemy(make_entity(meshes[2], basic_material, spike_texture))));
+	enemies.back().position.y = 0.05;
+	enemies.back().position.x = 43.75;
 
 	std::vector<particle_container> particle_emitters;
 

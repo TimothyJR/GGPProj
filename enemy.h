@@ -18,6 +18,7 @@ struct enemy : public entity
 	DirectX::XMFLOAT3 acceleration;
 	bool active;
 	bool in_air;
+	bool is_spike;
 
 	void setActive(bool isActive);
 	virtual void update(float dt);

@@ -40,5 +40,5 @@ void enemy::update(float dt)
 {}
 
 enemy::enemy(entity init)
-	: entity(init), acceleration(0, 0, 0), velocity(0, 0, 0), active(true), in_air(false)
+	: entity(init), acceleration(0, 0, 0), velocity(0, 0, 0), active(true), in_air(false), is_spike(false)
 {}
